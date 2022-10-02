@@ -1,0 +1,112 @@
+{% load custom_tag %}
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+	<meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+	<title>簡易掲示板</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+</head>
+<body>
+
+
+    <h1 class="bg-primary text-white">簡易掲示板</h1>
+
+    <main class="container">
+
+        <h2>検索欄</h2>
+
+        <form action="" method="get">
+            <div>
+                {% for tag in tags %}
+                <label><input type="checkbox" name="tag" value="{{ tag.id }}"
+
+                    {# TODO:チェックしたタグであるかを判定するには、カスタムテンプレートタグを使うしかない #}
+                    {# 参照: https://stackoverflow.com/questions/34050150/django-templates-get-list-of-multiple-get-param#}
+                    {# {% if tag.str_id in request.GET.tag.all %}checked{% endif %} #}
+
+                    {# TODO: この場合はcontextプロセッサーを使うと言う方法も考えられる。 #}
+                    {# https://noauto-nolife.com/post/django-context-processors/ #}
+
+                    {% tag_checked request tag.id %}
+
+                    >:{{ tag.name }}</label>
+                {% endfor %}
+            </div>
+
+            <div class="input-group">
+
+                <input class="form-control" type="text" name="search" placeholder="作品名を入力">
+
+                <div class="input-group-append">
+                    <input class="form-control btn btn-outline-primary" type="submit" value="検索">
+                </div>
+            </div>
+
+        </form>
+
+
+        <h2>投稿フォーム</h2>
+
+        <form method="POST">
+            {% csrf_token %}
+            <input type="text" name="title" placeholder="タイトル">
+
+            <div>
+                {% for tag in tags %}
+                <label><input type="checkbox" name="tag" value="{{ tag.id }}">:{{ tag.name }}</label>
+                {% endfor %}
+            </div>
+
+
+            <textarea class="form-control" name="comment" placeholder="コメント"></textarea>
+            <input type="submit" value="送信">
+        </form>
+
+
+
+        {% for topic in topics %}
+        <div class="border">
+            
+            <h2>{{ topic.title }}</h2>
+
+            <div>タグ: {% for tag in topic.tag.all %}{{ tag }} {% endfor %}</div>
+            <div>{{ topic.dt }}</div>
+
+            <div>投稿者:{{ topic.user }}</div>
+            <div>{{ topic.comment|linebreaksbr }}</div>
+
+            {# 多対多に対して、後から追加する。 #}
+
+
+            {# TODO:ManyToManyの追加 (良いねも同様の機能で実装できる。) #}
+
+            <h2>タグ追加</h2>
+
+            {% for tag in tags %}
+            <form action="{% url 'bbs:tag' topic.id %}" method="POST" style="display:inline-block;">
+                {% csrf_token %}
+                <input type="hidden" name="tag" value="{{ tag.id }}">
+                <input type="submit" value="{{ tag.name }}">
+            </form>
+            {% endfor %}
+
+
+
+            {% comment %}
+            <div>
+                <h3>良いねした人</h3>
+                <div>{% for good in topic.good.all %}{{ good }} {% endfor %}</div>
+            </div>
+            {% endcomment %}
+
+        </div>
+        {% endfor %}
+
+    </main>
+
+
+</body>
+</html>
+
